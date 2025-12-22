@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { staffService } from '@/services/staff.service';
 import { StaffForm } from '@/components/staff/StaffForm';
@@ -8,7 +8,7 @@ import { ScheduleEditor } from '@/components/staff/ScheduleEditor';
 import { Button } from '@/components/ui/Button';
 import { WorkSchedule } from '@/types';
 
-export default function NewStaffPage() {
+function NewStaffContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get('userId'); // Recebe o userId da query
@@ -85,5 +85,24 @@ export default function NewStaffPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function NewStaffPage() {
+  return (
+    <Suspense fallback={
+      <div className="w-full mx-auto space-y-6">
+        <div className="flex flex-col gap-2">
+          <h1 className="text-3xl font-bold text-foreground">
+            Novo Profissional
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Carregando...
+          </p>
+        </div>
+      </div>
+    }>
+      <NewStaffContent />
+    </Suspense>
   );
 }
