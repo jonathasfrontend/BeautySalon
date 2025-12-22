@@ -1,11 +1,11 @@
-import { NextResponse, type MiddlewareConfig, type NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
 
 const PUBLIC_ROUTES = ['/login'];
 const LOGIN_ROUTE = '/login';
 const DASHBOARD_ROUTE = '/dashboard';
 
-export function middleware(request: NextRequest) {
+export default function proxy(request: NextRequest) {
     const { pathname } = request.nextUrl;
     const authToken = request.cookies.get('auth_token');
     const isPublicRoute = PUBLIC_ROUTES.includes(pathname);
@@ -49,7 +49,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
 }
 
-export const config: MiddlewareConfig = {
+export const config = {
     matcher: [
         /*
             * Match all request paths except for the ones starting with:
