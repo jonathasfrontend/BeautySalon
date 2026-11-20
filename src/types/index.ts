@@ -210,14 +210,17 @@ export interface WorkSchedule {
 export interface Staff {
   id: string;
   userId: string;
-  specialties: string[];
-  commissionType: CommissionType;
-  commissionValue: number;
+  /** false = usuário com cargo sem perfil de staff (cadastro pendente) */
+  hasProfile?: boolean;
+  role?: { id: string; name: string };
+  specialties?: string[];
+  commissionType?: CommissionType;
+  commissionValue?: number;
   workSchedule?: Record<string, any>;
   blockedDates?: Record<string, any>;
-  isAvailable: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isAvailable?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
   user?: User;
 }
 
@@ -378,6 +381,23 @@ export interface PaginatedResponse<T = any> {
 export interface PaginationParams {
   page?: number;
   limit?: number;
+}
+
+// =============================================
+// NOTIFICATION TYPES
+// =============================================
+
+export interface NotificationItem {
+  id: string;
+  type: string;
+  channel: string;
+  message: string;
+  status: string;
+  readAt: string | null;
+  appointmentId?: string | null;
+  /** Rota interna para onde o clique na notificação navega. */
+  link?: string | null;
+  createdAt: string;
 }
 
 export interface DashboardStats {

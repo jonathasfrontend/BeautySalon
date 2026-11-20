@@ -18,16 +18,17 @@ class ClientService {
   /**
    * Get all clients with pagination and filters
    */
-  async getClients(filters?: ClientFilters): Promise<PaginatedResponse<Client>> {
+  async getClients(filters?: ClientFilters, signal?: AbortSignal): Promise<PaginatedResponse<Client>> {
     const response = await api.get<PaginatedResponse<Client>>('/clients', {
       params: filters,
+      signal,
     });
     return response.data;
   }
 
   // Alias for getClients
-  async getAll(filters?: ClientFilters): Promise<PaginatedResponse<Client>> {
-    return this.getClients(filters);
+  async getAll(filters?: ClientFilters, signal?: AbortSignal): Promise<PaginatedResponse<Client>> {
+    return this.getClients(filters, signal);
   }
 
   /**
@@ -96,6 +97,17 @@ class ClientService {
   async getHistory(id: string): Promise<ApiResponse<ClientHistory>> {
     const response = await api.get<ApiResponse<ClientHistory>>(`/clients/${id}/history`);
     return response.data;
+  }
+
+  /**
+   * Export clients CSV.
+   * O CSV é gerado no servidor (permissão `clients.export`) — o frontend
+   * apenas baixa o arquivo, sem montar planilha local.
+   */
+  async exportCsv(): Promise<{ blob: Blob; count: number }> {
+    const response = await api.get('/clients/export', { responseType: 'blob' });
+    const count = Number(response.headers['x-total-count'] ?? 0);
+    return { blob: response.data as Blob, count };
   }
 
   /**

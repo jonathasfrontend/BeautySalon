@@ -1,26 +1,46 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Staff } from '@/types';
 import { staffService } from '@/services/staff.service';
 import { StaffCard } from '@/components/staff/StaffCard';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { CustomLink } from '@/components/ui/Link';
 
 export default function StaffPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
+  const [search, setSearch] = useState('');
+  const [urlReady, setUrlReady] = useState(false);
+  const requestIdRef = useRef(0);
+  // `undefined` = ainda não lemos a URL. Precisa ser diferente de `null`
+  // (URL sem ?search=) para o primeiro efeito rodar e liberar o load.
+  const lastUrlSearchRef = useRef<string | null | undefined>(undefined);
+
+  // Busca global do header pode mudar ?search= na MESMA rota (sem remount).
+  const urlSearch = searchParams.get('search');
 
   useEffect(() => {
+    if (lastUrlSearchRef.current === urlSearch) return;
+    lastUrlSearchRef.current = urlSearch;
+    setSearch(urlSearch ?? '');
+    setUrlReady(true);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (!urlReady) return;
     loadStaff();
-  }, [showAvailableOnly]);
+  }, [showAvailableOnly, search, urlReady]);
 
   const loadStaff = async () => {
+    const requestId = ++requestIdRef.current;
     try {
       setLoading(true);
       const params: any = {};
@@ -29,12 +49,22 @@ export default function StaffPage() {
         params.isAvailable = true;
       }
 
+      if (search) {
+        params.search = search;
+      }
+
       const response = await staffService.getAll(params);
+
+      if (requestId !== requestIdRef.current) return;
+
       setStaff(response.data || []);
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
       console.error('Erro ao carregar profissionais:', error);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -60,7 +90,16 @@ export default function StaffPage() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-card rounded-lg shadow-sm p-4 border border-border">
+      <div className="bg-card rounded-lg shadow-sm p-4 border border-border space-y-4">
+        <div>
+          <Input
+            type="text"
+            placeholder="Buscar profissional por nome ou email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Buscar profissionais"
+          />
+        </div>
         <div className="flex items-center">
           <label className="flex items-center cursor-pointer">
             <Checkbox

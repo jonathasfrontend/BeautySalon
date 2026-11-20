@@ -9,14 +9,14 @@ class ServiceService {
   /**
    * Get all services
    */
-  async getServices(params?: { category?: string; isActive?: boolean }): Promise<Service[]> {
-    const response = await api.get<ApiResponse<Service[]>>('/services', { params });
+  async getServices(params?: { category?: string; isActive?: boolean; search?: string; limit?: number }, signal?: AbortSignal): Promise<Service[]> {
+    const response = await api.get<ApiResponse<Service[]>>('/services', { params, signal });
     return response.data.data!;
   }
 
   // Alias for getServices
-  async getAll(params?: { category?: string; isActive?: boolean }): Promise<ApiResponse<Service[]>> {
-    const response = await api.get<ApiResponse<Service[]>>('/services', { params });
+  async getAll(params?: { category?: string; isActive?: boolean; search?: string; limit?: number }, signal?: AbortSignal): Promise<ApiResponse<Service[]>> {
+    const response = await api.get<ApiResponse<Service[]>>('/services', { params, signal });
     return response.data;
   }
 

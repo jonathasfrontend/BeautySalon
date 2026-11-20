@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Label } from '@/components/ui/Label';
 import { userService } from '@/services/user.service';
-import { roleService } from '@/services/role.service';
 import {
   Select,
   SelectContent,
@@ -59,12 +58,11 @@ export function StaffForm({ staff, onSubmit, onCancel, preSelectedUserId }: Staf
   const loadAvailableUsers = async () => {
     try {
       setLoadingUsers(true);
-      // Buscar role "Profissional"
-      const professionalRole = await roleService.getRoleByName('Profissional');
-
-      // Buscar usuários sem staff associado
-      const users = await userService.getUsersWithoutStaff(professionalRole?.id);
-      setAvailableUsers(users);
+      // Usuários ativos com cargo (qualquer) e sem perfil de staff
+      const users = await userService.getUsers({ isActive: true });
+      setAvailableUsers(
+        users.filter((u) => !u.staff && !!u.role)
+      );
     } catch (error) {
       console.error('Erro ao carregar usuários disponíveis:', error);
     } finally {
@@ -124,7 +122,7 @@ export function StaffForm({ staff, onSubmit, onCancel, preSelectedUserId }: Staf
               </SelectContent>
             </Select>
             <p className="text-xs text-muted-foreground mt-1">
-              Apenas usuários com cargo "Profissional" e sem perfil de staff são exibidos
+              Apenas usuários ativos com cargo e sem perfil de profissional são exibidos
             </p>
           </div>
         )}

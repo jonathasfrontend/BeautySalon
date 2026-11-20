@@ -36,7 +36,8 @@ export function StaffRoleAssignment({ roleId, onSuccess }: StaffRoleAssignmentPr
     try {
       setLoading(true);
       const response = await staffService.getAll({});
-      setStaff(response.data || []);
+      // Só itens com perfil de staff real: assign-role exige staff.id (POST /staff/:id/assign-role)
+      setStaff((response.data || []).filter((s) => s.hasProfile !== false));
     } catch (error) {
       console.error('Erro ao carregar profissionais:', error);
     } finally {

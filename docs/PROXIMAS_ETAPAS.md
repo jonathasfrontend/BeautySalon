@@ -202,7 +202,7 @@ Profissional:
 - Despesas
 - Relatórios
 
-#### 6. Módulo de Produtos (`/dashboard/products`)
+#### 6. Módulo de Produtos (`/products`)
 - CRUD de produtos
 - Controle de estoque
 - Alertas

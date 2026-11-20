@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Client } from '@/types';
 import { clientService } from '@/services/client.service';
 import { ClientTable } from '@/components/clients/ClientTable';
@@ -13,18 +13,38 @@ import { CustomLink } from '@/components/ui/Link';
 
 export default function ClientsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showBlocked, setShowBlocked] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [urlReady, setUrlReady] = useState(false);
+  const requestIdRef = useRef(0);
+  // `undefined` = ainda não lemos a URL. Precisa ser diferente de `null`
+  // (URL sem ?search=) para o primeiro efeito rodar e liberar o load.
+  const lastUrlSearchRef = useRef<string | null | undefined>(undefined);
+
+  // Busca global do header pode mudar ?search= na MESMA rota (sem remount).
+  // Sincroniza o estado local quando o parâmetro da URL muda de fato.
+  const urlSearch = searchParams.get('search');
 
   useEffect(() => {
+    if (lastUrlSearchRef.current === urlSearch) return;
+    lastUrlSearchRef.current = urlSearch;
+    setSearch(urlSearch ?? '');
+    setPage(1);
+    setUrlReady(true);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (!urlReady) return;
     loadClients();
-  }, [page, search, showBlocked]);
+  }, [page, search, showBlocked, urlReady]);
 
   const loadClients = async () => {
+    const requestId = ++requestIdRef.current;
     try {
       setLoading(true);
       const params: any = {
@@ -41,12 +61,19 @@ export default function ClientsPage() {
       }
 
       const response = await clientService.getAll(params);
+
+      // Resposta obsoleta (filtro trocado antes de terminar) é descartada
+      if (requestId !== requestIdRef.current) return;
+
       setClients(response.data);
       setTotalPages(response.pagination.totalPages);
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
       console.error('Erro ao carregar clientes:', error);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 

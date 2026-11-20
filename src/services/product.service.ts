@@ -9,14 +9,14 @@ class ProductService {
   /**
    * Get all products
    */
-  async getProducts(params?: { category?: string; lowStock?: boolean; search?: string }): Promise<Product[]> {
-    const response = await api.get<ApiResponse<Product[]>>('/products', { params });
+  async getProducts(params?: { category?: string; lowStock?: boolean; search?: string; limit?: number }, signal?: AbortSignal): Promise<Product[]> {
+    const response = await api.get<ApiResponse<Product[]>>('/products', { params, signal });
     return response.data.data!;
   }
 
   // Alias for getProducts
-  async getAll(params?: any): Promise<ApiResponse<Product[]>> {
-    const response = await api.get<ApiResponse<Product[]>>('/products', { params });
+  async getAll(params?: { category?: string; lowStock?: boolean; search?: string; limit?: number }, signal?: AbortSignal): Promise<ApiResponse<Product[]>> {
+    const response = await api.get<ApiResponse<Product[]>>('/products', { params, signal });
     return response.data;
   }
 

@@ -9,7 +9,7 @@ class StaffService {
   /**
    * Get all staff
    */
-  async getStaff(params?: { specialty?: string; isAvailable?: boolean }): Promise<Staff[]> {
+  async getStaff(params?: { specialty?: string; isAvailable?: boolean; search?: string }): Promise<Staff[]> {
     const response = await api.get<ApiResponse<Staff[] | { staffs: Staff[] }>>('/staff', { params });
     // A API pode retornar { data: [...] } ou { data: { staffs: [...] } }
     const data = response.data.data;
@@ -17,7 +17,7 @@ class StaffService {
   }
 
   // Alias for getStaff
-  async getAll(params?: { specialty?: string; isAvailable?: boolean }): Promise<ApiResponse<Staff[]>> {
+  async getAll(params?: { specialty?: string; isAvailable?: boolean; search?: string }): Promise<ApiResponse<Staff[]>> {
     const response = await api.get<ApiResponse<Staff[] | { staffs: Staff[] }>>('/staff', { params });
     const data = response.data.data;
     const staffList = Array.isArray(data) ? data : (data as any)?.staffs || [];

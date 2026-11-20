@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Service } from '@/types';
 import { serviceService } from '@/services/service.service';
 import { ServiceCard } from '@/components/services/ServiceCard';
@@ -10,24 +10,44 @@ import { Button } from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { ServiceForm } from '@/components/services/ServiceForm';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Input } from '@/components/ui/Input';
 import toast from 'react-hot-toast';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { CustomLink } from '@/components/ui/Link';
 
 export default function ServicesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showActiveOnly, setShowActiveOnly] = useState(false);
+  const [search, setSearch] = useState('');
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [urlReady, setUrlReady] = useState(false);
+  const requestIdRef = useRef(0);
+  // `undefined` = ainda não lemos a URL. Precisa ser diferente de `null`
+  // (URL sem ?search=) para o primeiro efeito rodar e liberar o load.
+  const lastUrlSearchRef = useRef<string | null | undefined>(undefined);
+
+  // Busca global do header pode mudar ?search= na MESMA rota (sem remount).
+  const urlSearch = searchParams.get('search');
 
   useEffect(() => {
+    if (lastUrlSearchRef.current === urlSearch) return;
+    lastUrlSearchRef.current = urlSearch;
+    setSearch(urlSearch ?? '');
+    setUrlReady(true);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (!urlReady) return;
     loadServices();
-  }, [selectedCategory, showActiveOnly]);
+  }, [selectedCategory, showActiveOnly, search, urlReady]);
 
   const loadServices = async () => {
+    const requestId = ++requestIdRef.current;
     try {
       setLoading(true);
       const params: any = {};
@@ -40,12 +60,22 @@ export default function ServicesPage() {
         params.isActive = true;
       }
 
+      if (search) {
+        params.search = search;
+      }
+
       const response = await serviceService.getAll(params);
+
+      if (requestId !== requestIdRef.current) return;
+
       setServices(response.data || []);
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
       console.error('Erro ao carregar serviços:', error);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
@@ -99,6 +129,16 @@ export default function ServicesPage() {
 
       {/* Filtros */}
       <div className="bg-card rounded-lg shadow-sm p-4 border border-border space-y-4">
+        <div>
+          <Input
+            type="text"
+            placeholder="Buscar serviço por nome ou categoria..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            aria-label="Buscar serviços"
+          />
+        </div>
+
         <div>
           <p className="text-sm font-medium text-muted-foreground mb-2">
             Categorias

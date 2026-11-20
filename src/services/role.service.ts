@@ -131,17 +131,9 @@ class RoleService {
    * Assign role to staff (atribui ao user do staff)
    */
   async assignRoleToStaff(staffId: string, roleId: string): Promise<void> {
-    // Primeiro, buscar o staff para pegar o userId
-    const response = await api.get(`/staff/${staffId}`);
-    const staffData = response.data.data;
-    const userId = staffData.userId || staffData.user?.id;
-    
-    if (!userId) {
-      throw new Error('Staff não possui usuário associado');
-    }
-    
-    // Atribuir o cargo ao usuário do staff
-    await api.post(`/roles/${roleId}/assign/${userId}`);
+    // Endpoint dedicado: valida que staffId é um staff.id real (nunca userId
+    // de item pendente) e aplica o cargo no usuário do profissional.
+    await api.post(`/staff/${staffId}/assign-role`, { roleId });
   }
 
   /**

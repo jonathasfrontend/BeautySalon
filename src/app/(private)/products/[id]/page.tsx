@@ -142,7 +142,7 @@ export default function ProductDetailPage() {
     try {
       await productService.deleteProduct(productId);
       toast.success('Produto deletado com sucesso!');
-      router.push('/dashboard/products');
+      router.push('/products');
     } catch (error: any) {
       console.error('Erro ao deletar produto:', error);
       toast.error(error.response?.data?.message || 'Erro ao deletar produto');

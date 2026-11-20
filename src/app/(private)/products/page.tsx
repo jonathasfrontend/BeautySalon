@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Product } from '@/types';
 import { productService } from '@/services/product.service';
 import { Badge } from '@/components/ui/Badge';
@@ -14,16 +14,34 @@ import { CustomLink } from '@/components/ui/Link';
 
 export default function ProductsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showLowStock, setShowLowStock] = useState(false);
+  const [urlReady, setUrlReady] = useState(false);
+  const requestIdRef = useRef(0);
+  // `undefined` = ainda não lemos a URL. Precisa ser diferente de `null`
+  // (URL sem ?search=) para o primeiro efeito rodar e liberar o load.
+  const lastUrlSearchRef = useRef<string | null | undefined>(undefined);
+
+  // Busca global do header pode mudar ?search= na MESMA rota (sem remount).
+  const urlSearch = searchParams.get('search');
 
   useEffect(() => {
+    if (lastUrlSearchRef.current === urlSearch) return;
+    lastUrlSearchRef.current = urlSearch;
+    setSearch(urlSearch ?? '');
+    setUrlReady(true);
+  }, [urlSearch]);
+
+  useEffect(() => {
+    if (!urlReady) return;
     loadProducts();
-  }, [search, showLowStock]);
+  }, [search, showLowStock, urlReady]);
 
   const loadProducts = async () => {
+    const requestId = ++requestIdRef.current;
     try {
       setLoading(true);
       const params: any = {};
@@ -37,11 +55,17 @@ export default function ProductsPage() {
       }
 
       const response = await productService.getAll(params);
+
+      if (requestId !== requestIdRef.current) return;
+
       setProducts(response.data || []);
     } catch (error) {
+      if (requestId !== requestIdRef.current) return;
       console.error('Erro ao carregar produtos:', error);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 

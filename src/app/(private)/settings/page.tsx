@@ -1,9 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/store/auth.store';
 
 export default function SettingsPage() {
   const router = useRouter();
+  const { user, permissions } = useAuthStore();
 
   const settingsSections = [
     {
@@ -47,8 +49,15 @@ export default function SettingsPage() {
       icon: '💾',
       href: '/settings/backup',
       color: 'gray',
+      permission: 'clients.export',
     },
   ];
+
+  const visibleSections = settingsSections.filter(
+    (section) =>
+      !('permission' in section) ||
+      (!!user && permissions.includes(section.permission as string))
+  );
 
   const getColorClasses = (color: string) => {
     const colors = {
@@ -76,7 +85,7 @@ export default function SettingsPage() {
 
       {/* Grid de Configurações */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {settingsSections.map((section, index) => (
+        {visibleSections.map((section, index) => (
           <button
             key={index}
             onClick={() => router.push(section.href)}
