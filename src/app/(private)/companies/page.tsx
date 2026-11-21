@@ -45,27 +45,31 @@ export default function CompaniesPage() {
   const [timezone, setTimezone] = useState(DEFAULT_TIMEZONE);
   const [isActive, setIsActive] = useState(true);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await companiesService.list(page, limit);
-      setCompanies(result.items);
-      setTotal(result.pagination.total);
-      setTotalPages(result.pagination.totalPages);
-    } catch (error) {
-      toast.error(errorMessage(error, 'Erro ao carregar empresas'));
-    } finally {
-      setLoading(false);
-    }
-  }, [page, limit]);
+  // Parâmetros explícitos: closure estável, sem capturar `page` do render.
+  const fetchCompanies = useCallback(
+    async (targetPage: number, targetLimit: number) => {
+      setLoading(true);
+      try {
+        const result = await companiesService.list(targetPage, targetLimit);
+        setCompanies(result.items);
+        setTotal(result.pagination.total);
+        setTotalPages(result.pagination.totalPages);
+      } catch (error) {
+        toast.error(errorMessage(error, 'Erro ao carregar empresas'));
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
 
   useEffect(() => {
     if (!canRead) {
       router.push('/dashboard');
       return;
     }
-    load();
-  }, [canRead, load, router]);
+    fetchCompanies(page, limit);
+  }, [canRead, page, limit, fetchCompanies, router]);
 
   const handleCreate = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -88,8 +92,13 @@ export default function CompaniesPage() {
       setTimezone(DEFAULT_TIMEZONE);
       setIsActive(true);
       setShowForm(false);
-      setPage(1);
-      await load();
+      // page=1: recarrega explicitamente (setPage(1) não dispararia o effect).
+      // page>1: o useEffect com page=1 faz a busca; evita dupla request.
+      if (page === 1) {
+        await fetchCompanies(1, limit);
+      } else {
+        setPage(1);
+      }
     } catch (error) {
       toast.error(errorMessage(error, 'Erro ao criar empresa'));
     } finally {
@@ -105,7 +114,7 @@ export default function CompaniesPage() {
       toast.success(
         company.isActive ? 'Empresa desativada' : 'Empresa ativada'
       );
-      await load();
+      await fetchCompanies(page, limit);
     } catch (error) {
       toast.error(errorMessage(error, 'Erro ao atualizar empresa'));
     } finally {
@@ -130,7 +139,7 @@ export default function CompaniesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={load}
+            onClick={() => fetchCompanies(page, limit)}
             disabled={loading}
             aria-label="Recarregar empresas"
           >
@@ -172,12 +181,12 @@ export default function CompaniesPage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company-document">CNPJ (opcional)</Label>
+              <Label htmlFor="company-document">Documento (opcional)</Label>
               <Input
                 id="company-document"
                 value={document}
                 onChange={(event) => setDocument(event.target.value)}
-                placeholder="Somente números"
+                placeholder="Ex.: 12.345.678/0001-90"
                 maxLength={20}
               />
             </div>
@@ -237,7 +246,7 @@ export default function CompaniesPage() {
               <thead className="bg-muted/50 text-muted-foreground">
                 <tr>
                   <th className="text-left font-medium px-4 py-3">Nome</th>
-                  <th className="text-left font-medium px-4 py-3">CNPJ</th>
+                  <th className="text-left font-medium px-4 py-3">Documento</th>
                   <th className="text-left font-medium px-4 py-3">Fuso horário</th>
                   <th className="text-left font-medium px-4 py-3">Status</th>
                   <th className="text-right font-medium px-4 py-3">Ações</th>
