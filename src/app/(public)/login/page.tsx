@@ -144,6 +144,14 @@ export default function LoginPage() {
             </Button>
           </form>
 
+          {/* 0B.2: register público desativado no backend (403). Sem formulário
+              de cadastro — usuário novo só via POST /users pelo Admin. */}
+          <div className="mt-6 rounded-lg border border-border bg-muted/50 p-4">
+            <p className="text-sm text-muted-foreground">
+              Cadastro desativado. Solicite ao administrador.
+            </p>
+          </div>
+
           {/* Demo Credentials */}
           {/* <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <p className="text-sm font-medium text-blue-900 mb-2">

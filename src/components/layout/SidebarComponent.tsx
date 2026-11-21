@@ -18,6 +18,7 @@ import {
   Clock,
   LogOut,
   Shield,
+  Building2,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -86,6 +87,12 @@ const menuItems = [
     permission: 'reports.read',
   },
   {
+    name: 'Empresas',
+    href: '/companies',
+    icon: Building2,
+    permission: 'companies.read',
+  },
+  {
     name: 'Cargos e Permissões',
     href: '/roles',
     icon: Shield,
@@ -118,6 +125,7 @@ export default function SidebarComponent() {
   const paymentsPermission = usePermission('payments.read');
   const productsPermission = usePermission('products.read');
   const reportsPermission = usePermission('reports.read');
+  const companiesPermission = usePermission('companies.read');
   const rolesPermission = usePermission('roles.read');
   const waitlistPermission = usePermission('waitlist.read');
 
@@ -130,6 +138,7 @@ export default function SidebarComponent() {
     'payments.read': paymentsPermission,
     'products.read': productsPermission,
     'reports.read': reportsPermission,
+    'companies.read': companiesPermission,
     'roles.read': rolesPermission,
     'waitlist.read': waitlistPermission,
   };

@@ -2,7 +2,6 @@ import api from '@/lib/api';
 import { setCookie, deleteCookie } from '@/lib/cookies';
 import type {
   LoginCredentials,
-  RegisterData,
   AuthResponse,
   ApiResponse,
   User,
@@ -20,17 +19,6 @@ class AuthService {
 
     this.setAccessToken(data.accessToken);
     return data;
-  }
-
-  /**
-   * Register new user
-   */
-  async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post<ApiResponse<AuthResponse>>('/auth/register', data);
-    const authData = response.data.data!;
-
-    this.setAccessToken(authData.accessToken);
-    return authData;
   }
 
   /**
