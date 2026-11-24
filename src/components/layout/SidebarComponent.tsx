@@ -19,6 +19,7 @@ import {
   LogOut,
   Shield,
   Building2,
+  Wallet,
 } from 'lucide-react';
 import {
   Sidebar,
@@ -32,7 +33,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { usePermission } from '@/hooks/useAuth';
+import { useAnyPermission, usePermission } from '@/hooks/useAuth';
 import { Button } from '../ui/Button';
 import LogoP from '@/assets/logoP.png'
 import { Separator } from '../ui/separator';
@@ -79,6 +80,13 @@ const menuItems = [
     href: '/products',
     icon: Package,
     permission: 'products.read',
+  },
+  {
+    // Curinga: qualquer permissão finance.* (spec §10.1) — vê useAnyPermission.
+    name: 'Financeiro',
+    href: '/financeiro',
+    icon: Wallet,
+    permission: 'finance.*',
   },
   {
     name: 'Relatórios',
@@ -128,6 +136,8 @@ export default function SidebarComponent() {
   const companiesPermission = usePermission('companies.read');
   const rolesPermission = usePermission('roles.read');
   const waitlistPermission = usePermission('waitlist.read');
+  // OR (não .every): o item aparece com QUALQUER permissão finance.*
+  const financePermission = useAnyPermission('finance.*');
 
   // Map permissions to menu items
   const permissionsMap: { [key: string]: boolean } = {
@@ -137,6 +147,7 @@ export default function SidebarComponent() {
     'services.read': servicesPermission,
     'payments.read': paymentsPermission,
     'products.read': productsPermission,
+    'finance.*': financePermission,
     'reports.read': reportsPermission,
     'companies.read': companiesPermission,
     'roles.read': rolesPermission,
